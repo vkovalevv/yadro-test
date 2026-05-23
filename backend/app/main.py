@@ -1,3 +1,26 @@
+import logging
+from contextlib import asynccontextmanager
+from collections.abc import AsyncIterator
+
 from fastapi import FastAPI
 
-app = FastAPI()
+from app.config import get_settings
+from app.db.session import AsyncSessionLocal
+from app.external import get_random_data_client
+from app.services.users import load_users
+
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    settings = get_settings()
+    client = get_random_data_client()
+
+    async with AsyncSessionLocal() as session:
+        inserted = await load_users(session, client, settings.initial_load_count)
+    logger.info('Loaded %d users from external API', inserted)
+
+    yield
+
+app = FastAPI(lifespan=lifespan)
