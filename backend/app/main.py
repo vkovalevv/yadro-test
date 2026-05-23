@@ -4,6 +4,7 @@ from collections.abc import AsyncIterator
 
 from fastapi import FastAPI
 
+from app.api import users
 from app.config import get_settings
 from app.db.session import AsyncSessionLocal
 from app.external import get_random_data_client
@@ -24,3 +25,4 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     yield
 
 app = FastAPI(lifespan=lifespan)
+app.include_router(users.router)
