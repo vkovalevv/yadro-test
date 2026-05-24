@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from collections.abc import AsyncIterator
 
 from fastapi import FastAPI
+from starlette.types import Lifespan
 
 from app.api import users
 from app.config import get_settings
@@ -14,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+async def default_lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings = get_settings()
     client = get_random_data_client()
 
@@ -24,5 +25,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     yield
 
-app = FastAPI(lifespan=lifespan)
-app.include_router(users.router)
+
+def create_app(lifespan: Lifespan[FastAPI] | None = default_lifespan) -> FastAPI:
+    app = FastAPI(lifespan=lifespan)
+    app.include_router(users.router)
+    return app
+
+
+app = create_app()
