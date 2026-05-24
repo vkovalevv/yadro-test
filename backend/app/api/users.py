@@ -6,6 +6,9 @@ from app.db.models import User
 from app.db.session import get_session
 from app.schemas import UserListResponse, UserRead
 
+from app.external import RandomDataClient, get_random_data_client
+from app.services.users import load_users
+
 router = APIRouter(prefix='/users', tags=['users'])
 
 
@@ -39,6 +42,19 @@ async def get_random_user(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail='No users in database')
     return user
+
+
+@router.post('/load', status_code=status.HTTP_201_CREATED)
+async def load_more_users(
+    count: int = Query(..., ge=1, le=10000),
+    session: AsyncSession = Depends(get_session),
+    client: RandomDataClient = Depends(get_random_data_client)
+) -> dict[str, int]:
+    '''
+    Загружаем с внешнего API указанное количество человек в нашу БД
+    '''
+    inserted = await load_users(session, client, count)
+    return {'inserted': inserted}
 
 
 @router.get('/{user_id}', response_model=UserRead)

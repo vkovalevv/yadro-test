@@ -1,5 +1,6 @@
 from httpx import AsyncClient
-
+import httpx
+import respx
 from app.db.models import User
 
 
@@ -62,3 +63,26 @@ async def test_random_user_eventually_varies(
         response = await client.get('/users/random')
         ids.add(response.json()['id'])
     assert len(ids) > 1, 'random return the same user 10 times'
+
+
+@respx.mock
+async def test_load_more_users_insert_into_db(client: AsyncClient):
+    user_payload = {
+        'FirstName': 'Иван',
+        'LastName': 'Иванов',
+        'Gender': 'Мужчина',
+        'Phone': '+7 (999) 000-00-00',
+        'Email': 'ivan@test.com',
+        'Address': 'Россия, г. Москва'
+    }
+    respx.get('https://api.randomdatatools.ru/').mock(
+        return_value=httpx.Response(200, json=[user_payload]*3)
+    )
+
+    response = await client.post('/users/load', params={'count': 3})
+
+    assert response.status_code == 201
+    assert response.json() == {'inserted': 3}
+
+    list_response = await client.get('/users')
+    assert list_response.json()['total'] == 3
