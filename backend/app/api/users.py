@@ -36,7 +36,7 @@ async def get_random_user(
 ) -> User:
     user = await session.scalar(select(User).order_by(func.random()).limit(1))
     if user is None:
-        raise HTTPException(status=status.HTTP_404_NOT_FOUND,
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail='No users in database')
     return user
 
@@ -48,6 +48,6 @@ async def get_user(
 ) -> User:
     user = await session.get(User, user_id)
     if user is None:
-        raise HTTPException(status=status.HTTP_404_NOT_FOUND,
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail='User not found')
     return user

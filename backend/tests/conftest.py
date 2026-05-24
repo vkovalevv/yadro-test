@@ -1,6 +1,8 @@
 import os
 from collections.abc import AsyncIterator
 
+from app.db.models import User
+
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import (
@@ -49,3 +51,21 @@ async def client(session: AsyncSession) -> AsyncIterator[AsyncClient]:
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url='http://test') as client:
         yield client
+
+
+@pytest_asyncio.fixture
+async def seeded_users(session: AsyncSession) -> list[User]:
+    users = [
+        User(
+            first_name=f'User{i}',
+            last_name=f'Test',
+            gender='Мужчина' if i % 2 == 0 else 'Женщина',
+            phone=f'+7 (999) 000-00-{i:02d}',
+            email=f'user{i}@test.com',
+            address=f'Address {i}'
+        )
+        for i in range(5)
+    ]
+    session.add_all(users)
+    await session.commit()
+    return users
