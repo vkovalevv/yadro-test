@@ -1,5 +1,8 @@
 # Users Directory
 
+![Главная](docs/screenshots/list.png)
+![Страница пользователя](docs/screenshots/detail.png)
+
 Web-приложение для работы со списком случайных пользователей.
 При старте бэкенд загружает 1000 человек с публичного API
 [randomdatatools.ru](https://api.randomdatatools.ru/) и складывает в БД.
