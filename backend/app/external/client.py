@@ -14,22 +14,28 @@ class RandomDataClient:
         self._timeout = timeout
 
     async def fetch_users(self, count: int) -> list[ExternalUser]:
+        if count <= 0:
+            return []
+
         results: list[ExternalUser] = []
+
         async with httpx.AsyncClient(timeout=self._timeout) as client:
             while len(results) < count:
-                batch_size = min(self.MAX_PER_REQUEST,
-                                 count - len(results))
-                response = await client.get(self._base_url, params={'count': batch_size})
+                batch_size = min(self.MAX_PER_REQUEST, count - len(results))
+                response = await client.get(self._base_url, params={"count": batch_size})
                 response.raise_for_status()
                 payload: Any = response.json()
 
                 if isinstance(payload, dict):
                     payload = [payload]
 
-                results.extend(ExternalUser.model_validate(item)
-                               for item in payload)
+                batch = [ExternalUser.model_validate(item) for item in payload]
+                if not batch:
+                    break  # API ничего не вернул — выходим, чтобы не зациклиться
 
-        return results
+                results.extend(batch)
+
+        return results[:count]
 
 
 def get_random_data_client() -> RandomDataClient:
